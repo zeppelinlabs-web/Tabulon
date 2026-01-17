@@ -18,6 +18,11 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  generatePdfFromCsv, 
+  generatePdfFromJson, 
+  generatePdfFromXml 
+} from '@/lib/pdf-generator';
 
 // Sample data for demo
 const sampleData = {
@@ -106,11 +111,37 @@ export default function Index() {
     toast.success(`Sample ${demoFormat.toUpperCase()} loaded`);
   };
 
-  const handleExport = () => {
-    toast.success('PDF export ready!', {
-      description: 'Your document has been generated successfully.',
-    });
-  };
+  const handleExport = useCallback(() => {
+    if (!content || !format) return;
+
+    const filename = file?.name 
+      ? file.name.replace(/\.(csv|json|xml)$/i, '.pdf')
+      : `${format}-export.pdf`;
+
+    try {
+      const options = {
+        ...exportOptions,
+        filename,
+      };
+
+      if (format === 'csv') {
+        generatePdfFromCsv(content, options);
+      } else if (format === 'json') {
+        generatePdfFromJson(content, options);
+      } else if (format === 'xml') {
+        generatePdfFromXml(content, options);
+      }
+
+      toast.success('PDF exported successfully!', {
+        description: `Saved as ${filename}`,
+      });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Failed to generate PDF', {
+        description: 'Please check your file format and try again.',
+      });
+    }
+  }, [content, format, file, exportOptions]);
 
   const handleClear = () => {
     setFile(null);
