@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { Header } from '@/components/Header';
 import { UploadZone } from '@/components/UploadZone';
 import { PreviewPanel } from '@/components/PreviewPanel';
-import { ExportOptions } from '@/components/ExportOptions';
+import { ExportOptions, type ExportOptionsType } from '@/components/ExportOptions';
 import { FormatBadge, detectFormat } from '@/components/FormatBadge';
 import { FeatureCard } from '@/components/FeatureCard';
 import { Button } from '@/components/ui/button';
@@ -70,16 +70,11 @@ export default function Index() {
   const [file, setFile] = useState<File | null>(null);
   const [content, setContent] = useState<string>('');
   const [format, setFormat] = useState<'csv' | 'json' | 'xml' | null>(null);
-  const [exportOptions, setExportOptions] = useState<{
-    pageSize: 'a4' | 'letter';
-    orientation: 'portrait' | 'landscape';
-    fontSize: 'small' | 'medium' | 'large';
-    showRowNumbers: boolean;
-    showMetadata: boolean;
-  }>({
+  const [exportOptions, setExportOptions] = useState<ExportOptionsType>({
     pageSize: 'a4',
     orientation: 'portrait',
     fontSize: 'medium',
+    layout: 'auto',
     showRowNumbers: true,
     showMetadata: true,
   });
@@ -222,6 +217,7 @@ export default function Index() {
                   <div className="lg:sticky lg:top-24 p-6 rounded-xl bg-card border border-border">
                     <ExportOptions
                       options={exportOptions}
+                      format={format}
                       onChange={setExportOptions}
                       onExport={handleExport}
                     />

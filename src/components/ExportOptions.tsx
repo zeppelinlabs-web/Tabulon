@@ -1,22 +1,28 @@
-import { Download, FileText, Settings2 } from 'lucide-react';
+import { Download, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 
+export interface ExportOptionsType {
+  pageSize: 'a4' | 'letter';
+  orientation: 'portrait' | 'landscape';
+  fontSize: 'small' | 'medium' | 'large';
+  layout: 'auto' | 'table' | 'structured';
+  showRowNumbers: boolean;
+  showMetadata: boolean;
+}
+
 interface ExportOptionsProps {
-  options: {
-    pageSize: 'a4' | 'letter';
-    orientation: 'portrait' | 'landscape';
-    fontSize: 'small' | 'medium' | 'large';
-    showRowNumbers: boolean;
-    showMetadata: boolean;
-  };
-  onChange: (options: ExportOptionsProps['options']) => void;
+  options: ExportOptionsType;
+  format: 'csv' | 'json' | 'xml';
+  onChange: (options: ExportOptionsType) => void;
   onExport: () => void;
 }
 
-export function ExportOptions({ options, onChange, onExport }: ExportOptionsProps) {
+export function ExportOptions({ options, format, onChange, onExport }: ExportOptionsProps) {
+  const showLayoutOption = format === 'json' || format === 'xml';
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-2 pb-4 border-b border-border">
@@ -25,6 +31,34 @@ export function ExportOptions({ options, onChange, onExport }: ExportOptionsProp
       </div>
 
       <div className="space-y-4">
+        {showLayoutOption && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Layout</Label>
+            <Select
+              value={options.layout}
+              onValueChange={(value: 'auto' | 'table' | 'structured') => 
+                onChange({ ...options, layout: value })
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto (Best fit)</SelectItem>
+                <SelectItem value="table">Table View</SelectItem>
+                <SelectItem value="structured">Structured View</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {options.layout === 'table' 
+                ? 'Flatten data into rows and columns'
+                : options.layout === 'structured'
+                ? 'Preserve hierarchy with indentation'
+                : 'Automatically choose best layout'}
+            </p>
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label className="text-sm font-medium">Page Size</Label>
           <Select
