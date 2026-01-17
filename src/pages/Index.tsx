@@ -70,6 +70,7 @@ export default function Index() {
   const [file, setFile] = useState<File | null>(null);
   const [content, setContent] = useState<string>('');
   const [format, setFormat] = useState<'csv' | 'json' | 'xml' | null>(null);
+  const [previewMode, setPreviewMode] = useState<'table' | 'structured'>('table');
   const [exportOptions, setExportOptions] = useState<ExportOptionsType>({
     pageSize: 'a4',
     orientation: 'portrait',
@@ -78,6 +79,39 @@ export default function Index() {
     showRowNumbers: true,
     showMetadata: true,
   });
+
+  const validateContent = (text: string, fileFormat: 'csv' | 'json' | 'xml'): { valid: boolean; error?: string } => {
+    try {
+      if (fileFormat === 'json') {
+        JSON.parse(text);
+      } else if (fileFormat === 'xml') {
+        // Basic XML validation
+        if (!text.trim().startsWith('<') || !text.trim().includes('>')) {
+          return {
+            valid: false,
+            error: 'Invalid XML format. XML must start with < and contain proper tags.'
+          };
+        }
+      } else if (fileFormat === 'csv') {
+        const lines = text.trim().split('\n');
+        if (lines.length < 2) {
+          return {
+            valid: false,
+            error: 'CSV file must contain at least a header row and one data row.'
+          };
+        }
+      }
+      return { valid: true };
+    } catch (e) {
+      if (fileFormat === 'json') {
+        return {
+          valid: false,
+          error: `Invalid JSON format: ${e instanceof Error ? e.message : 'Parse error'}. Please check your JSON syntax.`
+        };
+      }
+      return { valid: false, error: 'File content validation failed.' };
+    }
+  };
 
   const handleFileSelect = useCallback((selectedFile: File) => {
     const detectedFormat = detectFormat(selectedFile.name);
@@ -93,8 +127,25 @@ export default function Index() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
+      
+      // Validate content
+      const validation = validateContent(text, detectedFormat);
+      if (!validation.valid) {
+        toast.error('File Content Validation Failed', {
+          description: validation.error,
+        });
+        setFile(null);
+        setFormat(null);
+        return;
+      }
+      
       setContent(text);
       toast.success(`${detectedFormat.toUpperCase()} file loaded successfully`);
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read file', {
+        description: 'There was an error reading the file. Please try again.',
+      });
     };
     reader.readAsText(selectedFile);
   }, []);
@@ -211,7 +262,12 @@ export default function Index() {
 
               <div className="grid lg:grid-cols-[1fr,320px] gap-6">
                 <div className="order-2 lg:order-1">
-                  <PreviewPanel content={content} format={format} />
+                  <PreviewPanel 
+                    content={content} 
+                    format={format} 
+                    previewMode={previewMode}
+                    onPreviewModeChange={setPreviewMode}
+                  />
                 </div>
                 <aside className="order-1 lg:order-2">
                   <div className="lg:sticky lg:top-24 p-6 rounded-xl bg-card border border-border">
@@ -304,7 +360,11 @@ export default function Index() {
         <div className="container mx-auto max-w-5xl">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <FileText className="w-4 h-4" />
+              <img 
+                src="/logo.png.png" 
+                alt="Tabulon Logo" 
+                className="h-5 w-auto"
+              />
               <span>Tabulon</span>
             </div>
             <p className="text-sm text-muted-foreground">

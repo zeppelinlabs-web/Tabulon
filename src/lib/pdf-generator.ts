@@ -9,6 +9,11 @@ export interface PdfOptions {
   showRowNumbers: boolean;
   showMetadata: boolean;
   filename?: string;
+  customTitle?: string;
+  companyLogo?: string;
+  headerText?: string;
+  footerText?: string;
+  watermark?: string;
 }
 
 const fontSizeMap = {
@@ -20,7 +25,7 @@ const fontSizeMap = {
 const primaryColor: [number, number, number] = [13, 148, 136]; // Teal
 
 export function generatePdfFromCsv(content: string, options: PdfOptions): void {
-  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename } = options;
+  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename, customTitle, companyLogo, headerText, footerText, watermark } = options;
   const sizes = fontSizeMap[fontSize];
   
   const doc = new jsPDF({
@@ -33,20 +38,43 @@ export function generatePdfFromCsv(content: string, options: PdfOptions): void {
   const headers = rows[0] || [];
   const dataRows = rows.slice(1);
 
+  let currentY = 20;
+
+  // Add company logo if provided
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, 'PNG', 14, currentY, 30, 15);
+      currentY += 20;
+    } catch (e) {
+      console.error('Failed to add logo:', e);
+    }
+  }
+
+  // Add custom header text
+  if (headerText) {
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.text(headerText, pageWidth - 14, 10, { align: 'right' });
+  }
+
   // Add title
   doc.setFontSize(sizes.title);
   doc.setTextColor(30, 41, 59);
-  doc.text('Data Export', 14, 20);
+  doc.text(customTitle || 'Data Export', 14, currentY);
+  currentY += 8;
 
   // Add metadata
   if (showMetadata) {
     doc.setFontSize(sizes.body);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Rows: ${dataRows.length} | Columns: ${headers.length}`, 14, 34);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, currentY);
+    currentY += 6;
+    doc.text(`Rows: ${dataRows.length} | Columns: ${headers.length}`, 14, currentY);
+    currentY += 8;
   }
 
-  const startY = showMetadata ? 42 : 28;
+  const startY = currentY;
 
   // Prepare table data
   const tableHeaders = showRowNumbers ? ['#', ...headers] : headers;
@@ -79,7 +107,10 @@ export function generatePdfFromCsv(content: string, options: PdfOptions): void {
       0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
     } : {},
     didDrawPage: (data) => {
-      addPageFooter(doc, data.pageNumber);
+      addPageFooter(doc, data.pageNumber, undefined, footerText);
+      if (watermark) {
+        addWatermark(doc, watermark);
+      }
     },
   });
 
@@ -183,7 +214,7 @@ function flattenJsonToTable(data: unknown): { headers: string[]; rows: string[][
 
 // Generate table-style PDF for JSON
 function generateTableJsonPdf(data: unknown, options: PdfOptions): void {
-  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename } = options;
+  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename, customTitle, companyLogo, headerText, footerText, watermark } = options;
   const sizes = fontSizeMap[fontSize];
   
   const doc = new jsPDF({
@@ -194,20 +225,43 @@ function generateTableJsonPdf(data: unknown, options: PdfOptions): void {
 
   const { headers, rows } = flattenJsonToTable(data);
 
+  let currentY = 20;
+
+  // Add company logo if provided
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, 'PNG', 14, currentY, 30, 15);
+      currentY += 20;
+    } catch (e) {
+      console.error('Failed to add logo:', e);
+    }
+  }
+
+  // Add custom header text
+  if (headerText) {
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.text(headerText, pageWidth - 14, 10, { align: 'right' });
+  }
+
   // Add title
   doc.setFontSize(sizes.title);
   doc.setTextColor(30, 41, 59);
-  doc.text('JSON Data Export', 14, 20);
+  doc.text(customTitle || 'JSON Data Export', 14, currentY);
+  currentY += 8;
 
   // Add metadata
   if (showMetadata) {
     doc.setFontSize(sizes.body);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Rows: ${rows.length} | Columns: ${headers.length}`, 14, 34);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, currentY);
+    currentY += 6;
+    doc.text(`Rows: ${rows.length} | Columns: ${headers.length}`, 14, currentY);
+    currentY += 8;
   }
 
-  const startY = showMetadata ? 42 : 28;
+  const startY = currentY;
 
   // Prepare table data
   const tableHeaders = showRowNumbers ? ['#', ...headers] : headers;
@@ -241,7 +295,10 @@ function generateTableJsonPdf(data: unknown, options: PdfOptions): void {
       0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
     } : {},
     didDrawPage: (data) => {
-      addPageFooter(doc, data.pageNumber);
+      addPageFooter(doc, data.pageNumber, undefined, footerText);
+      if (watermark) {
+        addWatermark(doc, watermark);
+      }
     },
   });
 
@@ -250,7 +307,7 @@ function generateTableJsonPdf(data: unknown, options: PdfOptions): void {
 
 // Generate structured PDF for JSON
 function generateStructuredJsonPdf(content: string, options: PdfOptions): void {
-  const { pageSize, orientation, fontSize, showMetadata, filename } = options;
+  const { pageSize, orientation, fontSize, showMetadata, filename, customTitle, companyLogo, headerText, footerText, watermark } = options;
   const sizes = fontSizeMap[fontSize];
   
   const doc = new jsPDF({
@@ -269,13 +326,33 @@ function generateStructuredJsonPdf(content: string, options: PdfOptions): void {
 
   const lines = formatted.split('\n');
 
+  let currentY = 20;
+
+  // Add company logo if provided
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, 'PNG', 14, currentY, 30, 15);
+      currentY += 20;
+    } catch (e) {
+      console.error('Failed to add logo:', e);
+    }
+  }
+
+  // Add custom header text
+  if (headerText) {
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.text(headerText, pageWidth - 14, 10, { align: 'right' });
+  }
+
   // Add title
   doc.setFontSize(sizes.title);
   doc.setTextColor(30, 41, 59);
-  doc.text('JSON Document', 14, 20);
+  doc.text(customTitle || 'JSON Document', 14, currentY);
+  currentY += 8;
 
   // Add metadata
-  let currentY = 28;
   if (showMetadata) {
     doc.setFontSize(sizes.body);
     doc.setTextColor(100, 116, 139);
@@ -330,11 +407,14 @@ function generateStructuredJsonPdf(content: string, options: PdfOptions): void {
     currentY += lineHeight;
   });
 
-  // Add page numbers
+  // Add page numbers and watermark
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    addPageFooter(doc, i, pageCount);
+    addPageFooter(doc, i, pageCount, footerText);
+    if (watermark) {
+      addWatermark(doc, watermark);
+    }
   }
 
   doc.save(filename || 'json-export.pdf');
@@ -402,7 +482,7 @@ function parseXmlToObjects(xml: string): Record<string, string>[] {
 
 // Generate table-style PDF for XML
 function generateTableXmlPdf(data: Record<string, string>[], options: PdfOptions): void {
-  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename } = options;
+  const { pageSize, orientation, fontSize, showRowNumbers, showMetadata, filename, customTitle, companyLogo, headerText, footerText, watermark } = options;
   const sizes = fontSizeMap[fontSize];
   
   const doc = new jsPDF({
@@ -423,20 +503,43 @@ function generateTableXmlPdf(data: Record<string, string>[], options: PdfOptions
     headers.map(header => item[header] || '')
   );
 
+  let currentY = 20;
+
+  // Add company logo if provided
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, 'PNG', 14, currentY, 30, 15);
+      currentY += 20;
+    } catch (e) {
+      console.error('Failed to add logo:', e);
+    }
+  }
+
+  // Add custom header text
+  if (headerText) {
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.text(headerText, pageWidth - 14, 10, { align: 'right' });
+  }
+
   // Add title
   doc.setFontSize(sizes.title);
   doc.setTextColor(30, 41, 59);
-  doc.text('XML Data Export', 14, 20);
+  doc.text(customTitle || 'XML Data Export', 14, currentY);
+  currentY += 8;
 
   // Add metadata
   if (showMetadata) {
     doc.setFontSize(sizes.body);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-    doc.text(`Rows: ${rows.length} | Columns: ${headers.length}`, 14, 34);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, currentY);
+    currentY += 6;
+    doc.text(`Rows: ${rows.length} | Columns: ${headers.length}`, 14, currentY);
+    currentY += 8;
   }
 
-  const startY = showMetadata ? 42 : 28;
+  const startY = currentY;
 
   // Prepare table data
   const tableHeaders = showRowNumbers ? ['#', ...headers] : headers;
@@ -469,7 +572,10 @@ function generateTableXmlPdf(data: Record<string, string>[], options: PdfOptions
       0: { cellWidth: 12, halign: 'center', textColor: [100, 116, 139] },
     } : {},
     didDrawPage: (data) => {
-      addPageFooter(doc, data.pageNumber);
+      addPageFooter(doc, data.pageNumber, undefined, footerText);
+      if (watermark) {
+        addWatermark(doc, watermark);
+      }
     },
   });
 
@@ -478,7 +584,7 @@ function generateTableXmlPdf(data: Record<string, string>[], options: PdfOptions
 
 // Generate structured PDF for XML
 function generateStructuredXmlPdf(content: string, options: PdfOptions): void {
-  const { pageSize, orientation, fontSize, showMetadata, filename } = options;
+  const { pageSize, orientation, fontSize, showMetadata, filename, customTitle, companyLogo, headerText, footerText, watermark } = options;
   const sizes = fontSizeMap[fontSize];
   
   const doc = new jsPDF({
@@ -490,13 +596,33 @@ function generateStructuredXmlPdf(content: string, options: PdfOptions): void {
   const formatted = formatXml(content);
   const lines = formatted.split('\n');
 
+  let currentY = 20;
+
+  // Add company logo if provided
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, 'PNG', 14, currentY, 30, 15);
+      currentY += 20;
+    } catch (e) {
+      console.error('Failed to add logo:', e);
+    }
+  }
+
+  // Add custom header text
+  if (headerText) {
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    const pageWidth = doc.internal.pageSize.getWidth();
+    doc.text(headerText, pageWidth - 14, 10, { align: 'right' });
+  }
+
   // Add title
   doc.setFontSize(sizes.title);
   doc.setTextColor(30, 41, 59);
-  doc.text('XML Document', 14, 20);
+  doc.text(customTitle || 'XML Document', 14, currentY);
+  currentY += 8;
 
   // Add metadata
-  let currentY = 28;
   if (showMetadata) {
     doc.setFontSize(sizes.body);
     doc.setTextColor(100, 116, 139);
@@ -549,18 +675,21 @@ function generateStructuredXmlPdf(content: string, options: PdfOptions): void {
     currentY += lineHeight;
   });
 
-  // Add page numbers
+  // Add page numbers and watermark
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    addPageFooter(doc, i, pageCount);
+    addPageFooter(doc, i, pageCount, footerText);
+    if (watermark) {
+      addWatermark(doc, watermark);
+    }
   }
 
   doc.save(filename || 'xml-export.pdf');
 }
 
 // Helper: Add page footer
-function addPageFooter(doc: jsPDF, pageNumber: number, totalPages?: number): void {
+function addPageFooter(doc: jsPDF, pageNumber: number, totalPages?: number, customFooter?: string): void {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const total = totalPages || doc.getNumberOfPages();
@@ -574,7 +703,35 @@ function addPageFooter(doc: jsPDF, pageNumber: number, totalPages?: number): voi
     pageHeight - 10,
     { align: 'center' }
   );
+  
+  if (customFooter) {
+    doc.text(customFooter, pageWidth - 14, pageHeight - 10, { align: 'right' });
+  }
+  
   doc.text('Generated by Tabulon', 14, pageHeight - 10);
+}
+
+// Helper: Add watermark
+function addWatermark(doc: jsPDF, text: string): void {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  
+  doc.saveGraphicsState();
+  doc.setTextColor(200, 200, 200);
+  doc.setFontSize(60);
+  doc.setFont('helvetica', 'bold');
+  
+  // Rotate and center the watermark
+  const angle = -45;
+  const x = pageWidth / 2;
+  const y = pageHeight / 2;
+  
+  doc.text(text, x, y, {
+    align: 'center',
+    angle: angle,
+  });
+  
+  doc.restoreGraphicsState();
 }
 
 function parseCsv(content: string): string[][] {

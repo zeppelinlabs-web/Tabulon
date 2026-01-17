@@ -1,8 +1,11 @@
-import { Download, Settings2 } from 'lucide-react';
+import { Download, Settings2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useState } from 'react';
 
 export interface ExportOptionsType {
   pageSize: 'a4' | 'letter';
@@ -11,6 +14,11 @@ export interface ExportOptionsType {
   layout: 'auto' | 'table' | 'structured';
   showRowNumbers: boolean;
   showMetadata: boolean;
+  customTitle?: string;
+  companyLogo?: string;
+  headerText?: string;
+  footerText?: string;
+  watermark?: string;
 }
 
 interface ExportOptionsProps {
@@ -22,6 +30,26 @@ interface ExportOptionsProps {
 
 export function ExportOptions({ options, format, onChange, onExport }: ExportOptionsProps) {
   const showLayoutOption = format === 'json' || format === 'xml';
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit for logo
+        alert('Logo file size must be less than 1MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onChange({ ...options, companyLogo: event.target?.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    onChange({ ...options, companyLogo: undefined });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -133,6 +161,94 @@ export function ExportOptions({ options, format, onChange, onExport }: ExportOpt
             }
           />
         </div>
+      </div>
+
+      {/* Advanced Customization */}
+      <div className="border-t border-border pt-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full mb-4"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+        >
+          {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+        </Button>
+
+        {showAdvanced && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Document Title</Label>
+              <Input
+                placeholder="e.g., Q4 Sales Report"
+                value={options.customTitle || ''}
+                onChange={(e) => onChange({ ...options, customTitle: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Company Logo</Label>
+              {options.companyLogo ? (
+                <div className="relative">
+                  <img 
+                    src={options.companyLogo} 
+                    alt="Company Logo" 
+                    className="h-16 w-auto border border-border rounded p-2"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute -top-2 -right-2"
+                    onClick={removeLogo}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleLogoUpload}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PNG or JPG, max 1MB
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Header Text</Label>
+              <Input
+                placeholder="e.g., Confidential"
+                value={options.headerText || ''}
+                onChange={(e) => onChange({ ...options, headerText: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Footer Text</Label>
+              <Input
+                placeholder="e.g., © 2024 Company Name"
+                value={options.footerText || ''}
+                onChange={(e) => onChange({ ...options, footerText: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Watermark</Label>
+              <Input
+                placeholder="e.g., DRAFT"
+                value={options.watermark || ''}
+                onChange={(e) => onChange({ ...options, watermark: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Diagonal text across each page
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <Button 

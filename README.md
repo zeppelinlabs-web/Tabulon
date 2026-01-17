@@ -12,6 +12,14 @@ Tabulon is a web-based tool designed for data professionals who need to generate
 - **CSV Tables**: Auto-sized columns, text wrapping, and pagination-aware splitting
 - **JSON Hierarchy**: Nested structures rendered with proper indentation and visual depth
 - **XML Parsing**: Automatic detection of repeating elements and attribute handling
+- **Preview Toggle**: Switch between table and structured view for JSON/XML before exporting
+- **Data Validation**: Automatic format validation with helpful error messages
+
+### File Handling
+- **File Size Validation**: Maximum 5MB file size with clear error messages
+- **Format Validation**: Validates CSV, JSON, and XML structure before processing
+- **Malformed Data Detection**: Identifies and reports parsing errors with suggestions
+- **Supported Formats**: .csv, .json, .xml files
 
 ### Export Options
 - **Page Formats**: A4 and Letter sizes
@@ -23,12 +31,20 @@ Tabulon is a web-based tool designed for data professionals who need to generate
   - Structured (code-like formatting with syntax highlighting)
 - **Customization**: Toggle row numbers and metadata display
 
+### PDF Customization
+- **Custom Document Title**: Set a custom title for your PDF
+- **Company Logo**: Upload your company logo (PNG/JPG, max 1MB)
+- **Header Text**: Add custom header text (e.g., "Confidential")
+- **Footer Text**: Add custom footer text (e.g., copyright notice)
+- **Watermark Support**: Add diagonal watermark text across pages (e.g., "DRAFT")
+
 ### User Experience
-- **Instant Preview**: Real-time formatted document preview
+- **Instant Preview**: Real-time formatted document preview with mode switching
 - **Privacy Focused**: Files processed locally in browser
 - **Sample Data**: Built-in examples for CSV, JSON, and XML
-- **Drag & Drop**: Easy file upload interface
+- **Drag & Drop**: Easy file upload interface with validation
 - **Print-First Design**: Typography optimized for both digital and physical output
+- **Error Messages**: Clear, actionable error messages with suggestions
 
 ## Tech Stack
 
@@ -80,11 +96,21 @@ npm run test:watch   # Run tests in watch mode
 
 ## Usage
 
-1. **Upload a File**: Drag and drop or click to select a CSV, JSON, or XML file
+1. **Upload a File**: Drag and drop or click to select a CSV, JSON, or XML file (max 5MB)
 2. **Try Samples**: Click one of the sample data buttons to see examples
-3. **Configure Export**: Adjust page size, orientation, font size, and layout options
-4. **Preview**: Review the formatted document in real-time
-5. **Export**: Click "Export to PDF" to download your document
+3. **Preview Mode**: For JSON/XML, toggle between table and structured view
+4. **Configure Export**: 
+   - Adjust page size, orientation, font size, and layout options
+   - Add custom document title, company logo, header/footer text
+   - Add watermark if needed (e.g., "DRAFT", "CONFIDENTIAL")
+5. **Preview**: Review the formatted document in real-time
+6. **Export**: Click "Export to PDF" to download your customized document
+
+### File Requirements
+- **Maximum Size**: 5MB
+- **Supported Formats**: .csv, .json, .xml
+- **Logo Format**: PNG or JPG, max 1MB
+- **Valid Structure**: Files must be properly formatted (validated on upload)
 
 ## Project Structure
 
